@@ -104,3 +104,52 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Windows / sistema operativo
+Thumbs.db
+Thumbs.db:encryptable
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+._*
+
+# Visual Studio / Rider adicionales
+*.rsuser
+*.sln.docstates
+.idea/
+.idea/**
+
+# Informes de compilación y profiling
+/[Pp]rofilingCaptures/
+/[Bb]urstDebugInformation_DoNotShip/
+/[Bb]urstDebugInformation_DoNotShip_*/
+
+# Builds específicos de PC y Steam
+/[Ss]team[Bb]uild/
+/[Ss]team[Bb]uilds/
+/[Dd]edicated[Ss]erver[Bb]uild/
+/[Dd]edicated[Ss]erver[Bb]uilds/
+
+# Archivos generados por SteamCMD
+steamcmd/
+steamcmd.exe
+steamcmd.sh
+logs/
+appcache/
+depotcache/
+package/
+steamapps/
+*.acf
+
+# Credenciales y configuración local
+.env
+.env.*
+!.env.example
+*.secret
+secrets/
+credentials/
+
+# Backups del editor o IDE
+*.bak
+*.orig
+*~
