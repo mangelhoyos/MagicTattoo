@@ -6,11 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_Assets/Scenes/LobbyCreationScene.unity
-    guid: 3f4c0b3afe7e20b41bd2ede325682021
-  - enabled: 1
-    path: Assets/_Assets/Scenes/LobbyWaitingScene.unity
-    guid: 80822f99b3b11e04c83375ef0ffd5aff
+    path: Assets/_Assets/Scenes/GameScene.unity
+    guid: 6d2ea13fdcc71c9468133bceb3230bee
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 289c1b55c9541489481df5cc06664110, type: 3}
   m_UseUCBPForAssetBundles: 0
