@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3c2f4bc631e3d774ab5aa3f4cea906af
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 246652
+  packageName: Toolkit for Steamworks (for Unity 2022+)
+  packageVersion: 3.6.0
+  assetPath: Packages/com.heathen.steamworkscomplete/Tools~/Prefabs/My Chat Message
+    Template.prefab
+  uploadId: 771995

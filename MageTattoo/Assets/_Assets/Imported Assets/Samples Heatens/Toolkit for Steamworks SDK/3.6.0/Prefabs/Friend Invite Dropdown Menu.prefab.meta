@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 766cfd4c64f47fa4fb4a10d5ab2d6c62
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 246652
+  packageName: Toolkit for Steamworks (for Unity 2022+)
+  packageVersion: 3.6.0
+  assetPath: Packages/com.heathen.steamworkscomplete/Tools~/Prefabs/Friend Invite
+    Dropdown Menu.prefab
+  uploadId: 771995

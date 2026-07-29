@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 84f046bb97c3d3b4cb108c4d1d6c36eb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 246652
+  packageName: Toolkit for Steamworks (for Unity 2022+)
+  packageVersion: 3.6.0
+  assetPath: Packages/com.heathen.steamworkscomplete/Tools~/Prefabs/Selectable Friend
+    ID.prefab
+  uploadId: 771995

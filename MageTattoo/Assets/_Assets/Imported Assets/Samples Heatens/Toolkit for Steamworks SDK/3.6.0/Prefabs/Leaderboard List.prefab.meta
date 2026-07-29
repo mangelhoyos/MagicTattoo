@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 88dca14f620153247901fd08e20b7327
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 246652
+  packageName: Toolkit for Steamworks (for Unity 2022+)
+  packageVersion: 3.6.0
+  assetPath: Packages/com.heathen.steamworkscomplete/Tools~/Prefabs/Leaderboard List.prefab
+  uploadId: 771995

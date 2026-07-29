@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7f3f76a2904f45849b6e3ee6a9ac9029
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 246652
+  packageName: Toolkit for Steamworks (for Unity 2022+)
+  packageVersion: 3.6.0
+  assetPath: Packages/com.heathen.steamworkscomplete/Tools~/Prefabs/Clan Member Count
+    .prefab
+  uploadId: 771995

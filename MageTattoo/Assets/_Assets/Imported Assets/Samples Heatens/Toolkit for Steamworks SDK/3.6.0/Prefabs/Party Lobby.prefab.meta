@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 57140e9e37426e642b13cc3df4ca0a6d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 246652
+  packageName: Toolkit for Steamworks (for Unity 2022+)
+  packageVersion: 3.6.0
+  assetPath: Packages/com.heathen.steamworkscomplete/Tools~/Prefabs/Party Lobby.prefab
+  uploadId: 771995

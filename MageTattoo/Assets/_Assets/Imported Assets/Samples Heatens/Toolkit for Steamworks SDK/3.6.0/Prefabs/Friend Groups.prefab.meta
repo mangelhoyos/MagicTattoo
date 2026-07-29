@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: fdea0b1e95bf37e409855ead63b8d368
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 246652
+  packageName: Toolkit for Steamworks (for Unity 2022+)
+  packageVersion: 3.6.0
+  assetPath: Packages/com.heathen.steamworkscomplete/Tools~/Prefabs/Friend Groups.prefab
+  uploadId: 771995

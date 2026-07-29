@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 73c3300e28ba77b4190a0db091d79deb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 246652
+  packageName: Toolkit for Steamworks (for Unity 2022+)
+  packageVersion: 3.6.0
+  assetPath: Packages/com.heathen.steamworkscomplete/Tools~/Prefabs/Party Lobby Member
+    Slot.prefab
+  uploadId: 771995
