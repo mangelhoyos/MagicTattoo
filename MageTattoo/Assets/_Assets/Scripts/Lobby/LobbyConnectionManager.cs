@@ -17,7 +17,6 @@ public class LobbyConnectionManager : MonoBehaviour
         {
             lobbyManager.evtCreated.AddListener(OnLobbyCreatedSuccessfully);
             lobbyManager.evtCreateFailed.AddListener(OnLobbyCreationFailed);
-
             lobbyManager.evtEnterSuccess.AddListener(OnEnteredLobby);
         }
     }
@@ -59,9 +58,19 @@ public class LobbyConnectionManager : MonoBehaviour
 
     // LOGICA DE UNIRSE A LOBBY
 
-    public void JoinRequestedLobby(LobbyData targetLobby)
+    LobbyData lobbyToJoinData;
+
+    public void RequestedLobbyData(LobbyInvite targetLobby)
     {
-        lobbyManager.Join(targetLobby);
+        lobbyToJoinData = targetLobby.ToLobby;
+    }
+
+    public void JoinLobby()
+    {
+        if (lobbyToJoinData != null)
+        {
+            lobbyManager.Join(lobbyToJoinData);
+        }
     }
 
     private void OnEnteredLobby(LobbyData lobby)
