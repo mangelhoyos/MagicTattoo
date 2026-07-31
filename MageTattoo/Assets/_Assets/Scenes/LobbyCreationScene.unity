@@ -119,6 +119,96 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &1192883
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1192885}
+  - component: {fileID: 1192884}
+  m_Layer: 0
+  m_Name: SteamworksLobbyConnectionHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1192884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1192883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e78feedb71f03d7449d2c1ea72fdca71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SteamworksLobbyConnectionHandler
+  lobbyManager: {fileID: 777199961}
+  onHostLobbyCreated:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1418961379}
+        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
+        m_MethodName: HandleHostLobbyCreated
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onClientLobbyEntered:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1418961379}
+        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
+        m_MethodName: HandleClientLobbyEntered
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onLobbyCreationFailed:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1418961379}
+        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
+        m_MethodName: HandleLobbyCreationFailed
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!4 &1192885
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1192883}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 64747137}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3682096
 GameObject:
   m_ObjectHideFlags: 0
@@ -256,6 +346,40 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3682096}
   m_CullTransparentMesh: 1
+--- !u!1 &64747136
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 64747137}
+  m_Layer: 0
+  m_Name: LobbyConnection
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &64747137
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 64747136}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1192885}
+  - {fileID: 1149467321}
+  - {fileID: 1418961378}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &476855679
 GameObject:
   m_ObjectHideFlags: 0
@@ -479,33 +603,9 @@ MonoBehaviour:
   evtLobbyInvite:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1283456061}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
-      - m_Target: {fileID: 2141911438}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
-      - m_Target: {fileID: 946908102}
-        m_TargetAssemblyTypeName: LobbyConnectionManager, Assembly-CSharp
-        m_MethodName: RequestedLobbyData
+      - m_Target: {fileID: 1418961379}
+        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
+        m_MethodName: ReceiveLobbyInvite
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -929,8 +1029,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 946908102}
-        m_TargetAssemblyTypeName: LobbyConnectionManager, Assembly-CSharp
+      - m_Target: {fileID: 1418961379}
+        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
         m_MethodName: StartHost
         m_Mode: 1
         m_Arguments:
@@ -979,17 +1079,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 869546838}
   m_CullTransparentMesh: 1
---- !u!114 &946908102 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-  m_PrefabInstance: {fileID: 3525063667463992541}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed115d063932c064b97ef914c8865556, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LobbyConnectionManager
 --- !u!1 &1072246815
 GameObject:
   m_ObjectHideFlags: 0
@@ -1226,6 +1315,69 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1097244145}
   m_CullTransparentMesh: 1
+--- !u!1 &1149467319
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1149467321}
+  - component: {fileID: 1149467320}
+  m_Layer: 0
+  m_Name: FishNetLobbyConnectionHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1149467320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1149467319}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f05b5e5b7578064db61b141e68c2c49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FishNetLobbyConnectionHandler
+  fishySteamworks: {fileID: 6324767274082217758}
+  onHostStarted:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1418961379}
+        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
+        m_MethodName: HandleHostStarted
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onHostFailed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &1149467321
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1149467319}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 64747137}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1210780494
 GameObject:
   m_ObjectHideFlags: 0
@@ -1407,6 +1559,103 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1283456061}
   m_CullTransparentMesh: 1
+--- !u!1 &1418961377
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1418961378}
+  - component: {fileID: 1418961379}
+  m_Layer: 0
+  m_Name: LobbyConnectionCoordinator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1418961378
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1418961377}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 64747137}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1418961379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1418961377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df5ec0f11f385ac4cb9d2937bee0ef22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LobbyConnectionCoordinator
+  steamworksHandler: {fileID: 0}
+  fishNetHandler: {fileID: 0}
+  onInviteAvailable:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1283456061}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 2141911438}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+  onOperationStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onConnectionReady:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1072246817}
+        m_TargetAssemblyTypeName: NetworkSceneChanger, Assembly-CSharp
+        m_MethodName: ChangeScene
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onConnectionFailed:
+    m_PersistentCalls:
+      m_Calls: []
+  onReturnedToIdle:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1870681643
 GameObject:
   m_ObjectHideFlags: 0
@@ -1703,8 +1952,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 946908102}
-        m_TargetAssemblyTypeName: LobbyConnectionManager, Assembly-CSharp
+      - m_Target: {fileID: 1418961379}
+        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
         m_MethodName: JoinLobby
         m_Mode: 1
         m_Arguments:
@@ -1753,99 +2002,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2141911438}
   m_CullTransparentMesh: 1
---- !u!1001 &3525063667463992541
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 540899746075934725, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3709609018232357118, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: m_Name
-      value: LobbyConnectionManager
-      objectReference: {fileID: 0}
-    - target: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: lobbyManager
-      value: 
-      objectReference: {fileID: 777199961}
-    - target: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: fishySteamworks
-      value: 
-      objectReference: {fileID: 6324767274082217758}
-    - target: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: onHostStarted.m_PersistentCalls.m_Calls.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: onHostStarted.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: onHostStarted.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 1072246817}
-    - target: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: onHostStarted.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: onHostStarted.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ChangeScene
-      objectReference: {fileID: 0}
-    - target: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: onHostStarted.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: NetworkSceneChanger, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 7892632639636351598, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
-      propertyPath: onHostStarted.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: ab286fe227d92d644a937a83a3fed1f7, type: 3}
 --- !u!1001 &6324767274082217757
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1924,6 +2080,6 @@ SceneRoots:
   - {fileID: 1072246816}
   - {fileID: 6324767274082217757}
   - {fileID: 1093649422}
-  - {fileID: 3525063667463992541}
   - {fileID: 777199962}
+  - {fileID: 64747137}
   - {fileID: 1210780498}
