@@ -28,7 +28,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
     public event Action ExternalLobbyJoinRequested;
 
     private LobbyData cachedLobby;
-    private ulong? pendingExternalLobbyId;
+    private LobbyData pendingExternalLobby;
 
     [RuntimeInitializeOnLoadMethod(
         RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -96,35 +96,35 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
     }
 
     // Solicita entrar directamente a un lobby recibido desde Steam.
-    public bool TryJoinLobby(ulong lobbyId)
+    public bool TryJoinLobby(LobbyData lobby)
     {
         if (!ValidateLobbyManager())
             return false;
 
-        if (lobbyId == 0)
+        if (lobby == null || !lobby.IsValid)
         {
-            Debug.LogWarning("The external lobby ID is not valid.");
+            Debug.LogWarning("The external lobby is not valid.");
             return false;
         }
 
         ClearCachedLobby();
-        lobbyManager.Join(lobbyId);
+        lobbyManager.Join(lobby);
 
         return true;
     }
 
     // Entrega al coordinador una solicitud externa pendiente una sola vez.
     public bool TryConsumeExternalLobbyJoinRequest(
-        out ulong lobbyId)
+        out LobbyData lobby)
     {
-        if (!pendingExternalLobbyId.HasValue)
+        if (pendingExternalLobby == null)
         {
-            lobbyId = 0;
+            lobby = null;
             return false;
         }
 
-        lobbyId = pendingExternalLobbyId.Value;
-        pendingExternalLobbyId = null;
+        lobby = pendingExternalLobby;
+        pendingExternalLobby = null;
 
         return true;
     }
@@ -133,7 +133,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
     public void LeaveLobby()
     {
         ClearCachedLobby();
-        pendingExternalLobbyId = null;
+        pendingExternalLobby = null;
 
         if (!ValidateLobbyManager())
             return;
@@ -202,33 +202,23 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
 
     private void HandleGameLobbyJoinRequested(LobbyData lobby, UserData _)
     {
-        if (lobby == null ||
-            !ulong.TryParse(lobby.ToString(), out ulong lobbyId))
-        {
-            Debug.LogWarning(
-                "Steam requested an invalid lobby ID."
-            );
-
-            return;
-        }
-
-        QueueExternalLobbyJoinRequest(lobbyId);
+        QueueExternalLobbyJoinRequest(lobby);
     }
 
-    private void QueueExternalLobbyJoinRequest(ulong lobbyId)
+    private void QueueExternalLobbyJoinRequest(LobbyData lobby)
     {
-        if (lobbyId == 0)
+        if (lobby == null || !lobby.IsValid)
         {
             Debug.LogWarning(
-                "Steam requested an invalid lobby ID."
+                "Steam requested an invalid lobby."
             );
 
             return;
         }
 
-        if (pendingExternalLobbyId.HasValue)
+        if (pendingExternalLobby != null)
         {
-            if (pendingExternalLobbyId.Value != lobbyId)
+            if (pendingExternalLobby != lobby)
             {
                 Debug.LogWarning(
                     "Another external lobby join request is already pending."
@@ -238,7 +228,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
             return;
         }
 
-        pendingExternalLobbyId = lobbyId;
+        pendingExternalLobby = lobby;
         ExternalLobbyJoinRequested?.Invoke();
     }
 
@@ -263,8 +253,18 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
 
             bool hasLobbyArgument = i + 1 < arguments.Length;
 
-            if (!hasLobbyArgument ||
-                !ulong.TryParse(arguments[i + 1], out ulong lobbyId))
+            if (!hasLobbyArgument)
+            {
+                Debug.LogWarning(
+                    "Steam did not provide a lobby after +connect_lobby."
+                );
+
+                return;
+            }
+
+            LobbyData lobby = LobbyData.Get(arguments[i + 1]);
+
+            if (lobby == null || !lobby.IsValid)
             {
                 Debug.LogWarning(
                     "Steam provided an invalid +connect_lobby argument."
@@ -273,7 +273,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
                 return;
             }
 
-            QueueExternalLobbyJoinRequest(lobbyId);
+            QueueExternalLobbyJoinRequest(lobby);
             return;
         }
     }

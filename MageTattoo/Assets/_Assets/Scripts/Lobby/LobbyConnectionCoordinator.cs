@@ -111,8 +111,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
             return;
         }
 
-        if (!steamworksHandler.TryConsumeExternalLobbyJoinRequest(
-                out ulong lobbyId))
+        if (!steamworksHandler.TryConsumeExternalLobbyJoinRequest(out LobbyData lobby))
         {
             return;
         }
@@ -120,7 +119,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
         if (!TryBeginOperation(LobbyConnectionState.JoiningLobby))
             return;
 
-        if (!steamworksHandler.TryJoinLobby(lobbyId))
+        if (!steamworksHandler.TryJoinLobby(lobby))
         {
             BeginDisconnect(
                 "External lobby join request could not be started."
