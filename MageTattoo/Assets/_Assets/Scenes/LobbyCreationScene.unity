@@ -149,51 +149,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamworksLobbyConnectionHandler
   lobbyManager: {fileID: 777199961}
-  onHostLobbyCreated:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1418961379}
-        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
-        m_MethodName: HandleHostLobbyCreated
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onClientLobbyEntered:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1418961379}
-        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
-        m_MethodName: HandleClientLobbyEntered
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onLobbyCreationFailed:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1418961379}
-        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
-        m_MethodName: HandleLobbyCreationFailed
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!4 &1192885
 Transform:
   m_ObjectHideFlags: 0
@@ -594,7 +549,7 @@ MonoBehaviour:
     stringFilters: []
   createArguments:
     usageHint: 2
-    name: Lobby1
+    name: 
     slots: 4
     type: 1
     metadata: []
@@ -1344,25 +1299,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f05b5e5b7578064db61b141e68c2c49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FishNetLobbyConnectionHandler
+  networkManager: {fileID: 6324767274082217760}
   fishySteamworks: {fileID: 6324767274082217758}
-  onHostStarted:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1418961379}
-        m_TargetAssemblyTypeName: LobbyConnectionCoordinator, Assembly-CSharp
-        m_MethodName: HandleHostStarted
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onHostFailed:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!4 &1149467321
 Transform:
   m_ObjectHideFlags: 0
@@ -1603,8 +1541,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df5ec0f11f385ac4cb9d2937bee0ef22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyConnectionCoordinator
-  steamworksHandler: {fileID: 0}
-  fishNetHandler: {fileID: 0}
+  steamworksHandler: {fileID: 1192884}
+  fishNetHandler: {fileID: 1149467320}
   onInviteAvailable:
     m_PersistentCalls:
       m_Calls:
@@ -1635,7 +1573,7 @@ MonoBehaviour:
   onOperationStarted:
     m_PersistentCalls:
       m_Calls: []
-  onConnectionReady:
+  onHostConnected:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1072246817}
@@ -1650,6 +1588,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  onClientConnected:
+    m_PersistentCalls:
+      m_Calls: []
   onConnectionFailed:
     m_PersistentCalls:
       m_Calls: []
@@ -2070,6 +2011,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28b19962fe839804180bd02ce1a545f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FishySteamworks.FishySteamworks
+--- !u!114 &6324767274082217760 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4675756100384411037, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
+  m_PrefabInstance: {fileID: 6324767274082217757}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2c95dfde7d73b54dbbdc23155d35d36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

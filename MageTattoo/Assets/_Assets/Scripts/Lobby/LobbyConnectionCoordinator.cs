@@ -1,6 +1,7 @@
 using Steamworks;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using HeathenEngineering.SteamworksIntegration;
 
 public enum LobbyConnectionState
@@ -17,24 +18,40 @@ public enum LobbyConnectionState
 public class LobbyConnectionCoordinator : MonoBehaviour
 {
     [Header("Dependencies")]
-    [SerializeField]
-    private SteamworksLobbyConnectionHandler steamworksHandler;
-
-    [SerializeField]
-    private FishNetLobbyConnectionHandler fishNetHandler;
+    [SerializeField] private SteamworksLobbyConnectionHandler steamworksHandler;
+    [SerializeField] private FishNetLobbyConnectionHandler fishNetHandler;
 
     [Header("UI Events")]
     [SerializeField] private UnityEvent onInviteAvailable;
     [SerializeField] private UnityEvent onOperationStarted;
-    [SerializeField] private UnityEvent onConnectionReady;
+
+    [FormerlySerializedAs("onConnectionReady")]
+    [SerializeField] private UnityEvent onHostConnected;
+
+    [SerializeField] private UnityEvent onClientConnected;
     [SerializeField] private UnityEvent<string> onConnectionFailed;
     [SerializeField] private UnityEvent onReturnedToIdle;
 
     private LobbyConnectionState state = LobbyConnectionState.Idle;
+    private string pendingDisconnectError;
 
     public LobbyConnectionState State => state;
 
-    // Se llama desde el evento de invitación de Heathens.
+    private void OnEnable()
+    {
+        SubscribeToSteamworksEvents();
+        SubscribeToFishNetEvents();
+
+        HandleExternalLobbyJoinRequested();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeFromSteamworksEvents();
+        UnsubscribeFromFishNetEvents();
+    }
+
+    // Recibe y almacena una invitación emitida por el LobbyManager.
     public void ReceiveLobbyInvite(LobbyInvite lobbyInvite)
     {
         if (state != LobbyConnectionState.Idle)
@@ -52,55 +69,86 @@ public class LobbyConnectionCoordinator : MonoBehaviour
             return;
         }
 
-        steamworksHandler.CacheLobbyInvite(lobbyInvite);
+        if (!steamworksHandler.TryCacheLobbyInvite(lobbyInvite))
+            return;
+
         onInviteAvailable?.Invoke();
     }
 
-    // Se llama desde el botón para crear el lobby.
+    // Inicia desde la UI el flujo para crear el lobby y levantar el host.
     public void StartHost()
     {
-        if (!CanStartOperation())
+        if (!TryBeginOperation(LobbyConnectionState.CreatingLobby))
             return;
-
-        if (!ValidateDependencies())
-            return;
-
-        SetState(LobbyConnectionState.CreatingLobby);
-        onOperationStarted?.Invoke();
 
         if (!steamworksHandler.TryCreateLobby())
         {
-            FailAndReset("Lobby creation request could not be started.");
+            BeginDisconnect(
+                "Lobby creation request could not be started."
+            );
         }
     }
 
-    // Se llama desde el botón para entrar al lobby almacenado.
+    // Inicia desde la UI la conexión al lobby almacenado.
     public void JoinLobby()
     {
-        if (!CanStartOperation())
+        if (!TryBeginOperation(LobbyConnectionState.JoiningLobby))
             return;
-
-        if (!ValidateDependencies())
-            return;
-
-        SetState(LobbyConnectionState.JoiningLobby);
-        onOperationStarted?.Invoke();
 
         if (!steamworksHandler.TryJoinCachedLobby())
         {
-            FailAndReset("Lobby join request could not be started.");
+            BeginDisconnect(
+                "Lobby join request could not be started."
+            );
         }
     }
 
-    // Se llama cuando Steam confirma que el lobby fue creado.
-    public void HandleHostLobbyCreated()
+    private void HandleExternalLobbyJoinRequested()
     {
-        if (state != LobbyConnectionState.CreatingLobby)
+        if (steamworksHandler == null)
         {
-            Debug.LogWarning(
-                $"Lobby creation callback ignored because the current state is {state}."
-            );
+            Debug.LogError("SteamworksLobbyConnectionHandler is null.");
+            return;
+        }
 
+        if (!steamworksHandler.TryConsumeExternalLobbyJoinRequest(
+                out ulong lobbyId))
+        {
+            return;
+        }
+
+        if (!TryBeginOperation(LobbyConnectionState.JoiningLobby))
+            return;
+
+        if (!steamworksHandler.TryJoinLobby(lobbyId))
+        {
+            BeginDisconnect(
+                "External lobby join request could not be started."
+            );
+        }
+    }
+
+    // Permite que otros sistemas soliciten una desconexión segura.
+    public void Disconnect()
+    {
+        if (state == LobbyConnectionState.Idle)
+            return;
+
+        if (state == LobbyConnectionState.Disconnecting)
+        {
+            Debug.LogWarning("A disconnection operation is already active.");
+            return;
+        }
+
+        BeginDisconnect(null);
+    }
+
+    private void HandleHostLobbyCreated()
+    {
+        if (!IsExpectedState(
+                LobbyConnectionState.CreatingLobby,
+                "Lobby creation callback"))
+        {
             return;
         }
 
@@ -108,19 +156,30 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
         if (!fishNetHandler.TryStartHost())
         {
-            FailAndReset("FishNet host could not be started.");
+            BeginDisconnect("FishNet host could not be started.");
         }
     }
 
-    // Se llama cuando Steam confirma que entramos al lobby.
-    public void HandleClientLobbyEntered(string hostSteamId)
+    private void HandleLobbyCreationFailed(EResult result)
     {
-        if (state != LobbyConnectionState.JoiningLobby)
+        if (!IsExpectedState(
+                LobbyConnectionState.CreatingLobby,
+                "Lobby creation failure"))
         {
-            Debug.LogWarning(
-                $"Lobby entered callback ignored because the current state is {state}."
-            );
+            return;
+        }
 
+        BeginDisconnect(
+            $"Lobby creation failed with result: {result}."
+        );
+    }
+
+    private void HandleClientLobbyEntered(string hostSteamId)
+    {
+        if (!IsExpectedState(
+                LobbyConnectionState.JoiningLobby,
+                "Lobby entered callback"))
+        {
             return;
         }
 
@@ -128,42 +187,122 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
         if (!fishNetHandler.TryStartClient(hostSteamId))
         {
-            FailAndReset("FishNet client could not be started.");
+            BeginDisconnect("FishNet client could not be started.");
         }
-
-        // Todavía no cambiamos a Connected.
-        // Más adelante escucharemos la confirmación real de FishNet.
     }
 
-    // Se llama cuando Steam no puede crear el lobby.
-    public void HandleLobbyCreationFailed(EResult result)
+    private void HandleLobbyJoinFailed(EChatRoomEnterResponse response)
     {
-        if (state != LobbyConnectionState.CreatingLobby)
+        if (!IsExpectedState(
+                LobbyConnectionState.JoiningLobby,
+                "Lobby join failure"))
         {
-            Debug.LogWarning(
-                $"Lobby creation failure ignored because the current state is {state}."
-            );
-
             return;
         }
 
-        FailAndReset($"Lobby creation failed with result: {result}.");
+        BeginDisconnect(
+            $"Lobby join failed with response: {response}."
+        );
     }
 
-    // Por ahora conserva el comportamiento actual de FishNetLobbyConnectionHandler.
-    public void HandleHostStarted()
+    private void HandleLobbyValidationFailed(string errorMessage)
     {
-        if (state != LobbyConnectionState.StartingHost)
+        if (!IsExpectedState(
+                LobbyConnectionState.JoiningLobby,
+                "Lobby validation failure"))
         {
-            Debug.LogWarning(
-                $"Host started callback ignored because the current state is {state}."
-            );
+            return;
+        }
 
+        BeginDisconnect(errorMessage);
+    }
+
+    private void HandleSteamLobbyLeft()
+    {
+        if (state == LobbyConnectionState.Idle ||
+            state == LobbyConnectionState.Disconnecting)
+        {
+            return;
+        }
+
+        BeginDisconnect("The Steam lobby was left unexpectedly.");
+    }
+
+    private void HandleAskedToLeave()
+    {
+        if (state == LobbyConnectionState.Idle ||
+            state == LobbyConnectionState.Disconnecting)
+        {
+            return;
+        }
+
+        BeginDisconnect(
+            "Steam requested that the local player leave the lobby."
+        );
+    }
+
+    private void HandleHostStarted()
+    {
+        if (!IsExpectedState(
+                LobbyConnectionState.StartingHost,
+                "Host started callback"))
+        {
             return;
         }
 
         SetState(LobbyConnectionState.Connected);
-        onConnectionReady?.Invoke();
+        onHostConnected?.Invoke();
+    }
+
+    private void HandleClientStarted()
+    {
+        if (!IsExpectedState(
+                LobbyConnectionState.StartingClient,
+                "Client started callback"))
+        {
+            return;
+        }
+
+        SetState(LobbyConnectionState.Connected);
+        onClientConnected?.Invoke();
+    }
+
+    private void HandleFishNetConnectionFailed(string errorMessage)
+    {
+        if (!IsFishNetSessionActive())
+        {
+            Debug.LogWarning(
+                $"FishNet failure ignored because the current state is {state}."
+            );
+
+            return;
+        }
+
+        BeginDisconnect(errorMessage);
+    }
+
+    private void HandleFishNetConnectionsStopped()
+    {
+        if (!IsExpectedState(
+                LobbyConnectionState.Disconnecting,
+                "FishNet stop callback"))
+        {
+            return;
+        }
+
+        CompleteDisconnect();
+    }
+
+    private bool TryBeginOperation(
+        LobbyConnectionState operationState)
+    {
+        if (!CanStartOperation() || !ValidateDependencies())
+            return false;
+
+        SetState(operationState);
+        onOperationStarted?.Invoke();
+
+        return true;
     }
 
     private bool CanStartOperation()
@@ -195,15 +334,61 @@ public class LobbyConnectionCoordinator : MonoBehaviour
         return true;
     }
 
-    private void FailAndReset(string errorMessage)
+    private bool IsExpectedState(
+        LobbyConnectionState expectedState,
+        string callbackName)
     {
-        fishNetHandler?.StopConnections();
+        if (state == expectedState)
+            return true;
 
-        Debug.LogError(errorMessage);
+        Debug.LogWarning(
+            $"{callbackName} ignored because the current state is {state}. " +
+            $"Expected state: {expectedState}."
+        );
+
+        return false;
+    }
+
+    private bool IsFishNetSessionActive()
+    {
+        return state == LobbyConnectionState.StartingHost ||
+               state == LobbyConnectionState.StartingClient ||
+               state == LobbyConnectionState.Connected;
+    }
+
+    private void BeginDisconnect(string errorMessage)
+    {
+        if (state == LobbyConnectionState.Disconnecting)
+            return;
+
+        pendingDisconnectError = errorMessage;
+
+        SetState(LobbyConnectionState.Disconnecting);
+
+        if (fishNetHandler == null)
+        {
+            CompleteDisconnect();
+            return;
+        }
+
+        fishNetHandler.StopConnections();
+    }
+
+    private void CompleteDisconnect()
+    {
+        steamworksHandler?.LeaveLobby();
+
+        string errorMessage = pendingDisconnectError;
+        pendingDisconnectError = null;
 
         SetState(LobbyConnectionState.Idle);
 
-        onConnectionFailed?.Invoke(errorMessage);
+        if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            Debug.LogError(errorMessage);
+            onConnectionFailed?.Invoke(errorMessage);
+        }
+
         onReturnedToIdle?.Invoke();
     }
 
@@ -212,8 +397,62 @@ public class LobbyConnectionCoordinator : MonoBehaviour
         if (state == newState)
             return;
 
-        Debug.Log($"Lobby connection state changed: {state} -> {newState}.");
+        Debug.Log(
+            $"Lobby connection state changed: {state} -> {newState}."
+        );
 
         state = newState;
+    }
+
+    private void SubscribeToSteamworksEvents()
+    {
+        if (steamworksHandler == null)
+            return;
+
+        steamworksHandler.HostLobbyCreated += HandleHostLobbyCreated;
+        steamworksHandler.LobbyCreationFailed += HandleLobbyCreationFailed;
+        steamworksHandler.ClientLobbyEntered += HandleClientLobbyEntered;
+        steamworksHandler.LobbyJoinFailed += HandleLobbyJoinFailed;
+        steamworksHandler.LobbyValidationFailed += HandleLobbyValidationFailed;
+        steamworksHandler.LobbyLeft += HandleSteamLobbyLeft;
+        steamworksHandler.AskedToLeave += HandleAskedToLeave;
+        steamworksHandler.ExternalLobbyJoinRequested += HandleExternalLobbyJoinRequested;
+    }
+
+    private void UnsubscribeFromSteamworksEvents()
+    {
+        if (steamworksHandler == null)
+            return;
+
+        steamworksHandler.HostLobbyCreated -= HandleHostLobbyCreated;
+        steamworksHandler.LobbyCreationFailed -= HandleLobbyCreationFailed;
+        steamworksHandler.ClientLobbyEntered -= HandleClientLobbyEntered;
+        steamworksHandler.LobbyJoinFailed -= HandleLobbyJoinFailed;
+        steamworksHandler.LobbyValidationFailed -= HandleLobbyValidationFailed;
+        steamworksHandler.LobbyLeft -= HandleSteamLobbyLeft;
+        steamworksHandler.AskedToLeave -= HandleAskedToLeave;
+        steamworksHandler.ExternalLobbyJoinRequested -= HandleExternalLobbyJoinRequested;
+    }
+
+    private void SubscribeToFishNetEvents()
+    {
+        if (fishNetHandler == null)
+            return;
+
+        fishNetHandler.HostStarted += HandleHostStarted;
+        fishNetHandler.ClientStarted += HandleClientStarted;
+        fishNetHandler.ConnectionFailed += HandleFishNetConnectionFailed;
+        fishNetHandler.ConnectionsStopped += HandleFishNetConnectionsStopped;
+    }
+
+    private void UnsubscribeFromFishNetEvents()
+    {
+        if (fishNetHandler == null)
+            return;
+
+        fishNetHandler.HostStarted -= HandleHostStarted;
+        fishNetHandler.ClientStarted -= HandleClientStarted;
+        fishNetHandler.ConnectionFailed -= HandleFishNetConnectionFailed;
+        fishNetHandler.ConnectionsStopped -= HandleFishNetConnectionsStopped;
     }
 }
