@@ -9,7 +9,11 @@ public class PlayerSteamDataHolder : NetworkBehaviour
 {
     public event Action<SteamUserData> OnOwnerSteamDataRetrieved;
 
+    private const int MAXUSERNAMELENGTH = 64;
+
     private readonly SyncVar<SteamUserNetworkData> _steamUserData = new();
+
+    private bool _clientStarted;
 
     public SteamUserData PlayerData { get; private set; }
 
@@ -17,6 +21,7 @@ public class PlayerSteamDataHolder : NetworkBehaviour
     {
         base.OnStartClient();
 
+        _clientStarted = true;
         _steamUserData.OnChange += OnSteamDataChanged;
 
         if (IsOwner)
@@ -25,6 +30,8 @@ public class PlayerSteamDataHolder : NetworkBehaviour
 
     public override void OnStopClient()
     {
+        _clientStarted = false;
+
         _steamUserData.OnChange -= OnSteamDataChanged;
 
         base.OnStopClient();
@@ -34,54 +41,69 @@ public class PlayerSteamDataHolder : NetworkBehaviour
     {
         try
         {
-            SteamUserNetworkData data = new SteamUserNetworkData
+            SteamUserNetworkData data = new()
             {
                 userName = UserData.Me.Name,
                 userId = UserData.Me.id.m_SteamID
             };
 
+            if (data.userId == 0 || string.IsNullOrWhiteSpace(data.userName))
+                return;
+
             SetSteamDataServerRpc(data);
         }
         catch (Exception exception)
         {
-            Debug.LogError(
-                $"Failed to retrieve Steam user data: {exception}");
+            Debug.LogError($"Failed to retrieve Steam user data: {exception}");
         }
     }
 
     [ServerRpc]
     private void SetSteamDataServerRpc(SteamUserNetworkData data)
     {
+        if (_steamUserData.Value.userId != 0)
+            return;
+
+        if (data.userId == 0)
+            return;
+
+        if (string.IsNullOrWhiteSpace(data.userName))
+            return;
+
+        data.userName = data.userName.Trim();
+
+        if (data.userName.Length > MAXUSERNAMELENGTH)
+            data.userName = data.userName[..MAXUSERNAMELENGTH];
+
         _steamUserData.Value = data;
     }
 
-    private void OnSteamDataChanged(
-        SteamUserNetworkData previous,
-        SteamUserNetworkData current,
-        bool asServer)
+    private void OnSteamDataChanged(SteamUserNetworkData previous, SteamUserNetworkData current, bool asServer)
     {
         if (asServer)
             return;
 
-        PlayerData = new SteamUserData
-        {
-            userName = current.userName,
-            userId = current.userId,
-            avatarTexture = null
-        };
+        if (current.userId == 0 || string.IsNullOrWhiteSpace(current.userName))
+            return;
 
-        CSteamID steamId = new CSteamID(current.userId);
+        ulong requestedUserId = current.userId;
 
-        UserData.Get(steamId).LoadAvatar(texture =>
+        UserData.Get(new CSteamID(requestedUserId)).LoadAvatar(texture =>
         {
+            if (!_clientStarted || this == null)
+                return;
+
+            if (_steamUserData.Value.userId != requestedUserId)
+                return;
+
             PlayerData = new SteamUserData
             {
                 userName = current.userName,
-                userId = current.userId,
+                userId = requestedUserId,
                 avatarTexture = texture
             };
-            
-            if(IsOwner)
+
+            if (IsOwner)
                 OnOwnerSteamDataRetrieved?.Invoke(PlayerData);
         });
     }
