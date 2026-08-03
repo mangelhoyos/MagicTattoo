@@ -1,9 +1,8 @@
 using System;
-using HeathenEngineering.SteamworksIntegration;
 using Steamworks;
 using UnityEngine;
-using SteamOverlay =
-    HeathenEngineering.SteamworksIntegration.API.Overlay;
+using HeathenEngineering.SteamworksIntegration;
+using SteamOverlay = HeathenEngineering.SteamworksIntegration.API.Overlay;
 
 public class SteamworksLobbyConnectionHandler : MonoBehaviour
 {
@@ -30,8 +29,11 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
     private LobbyData cachedLobby;
     private LobbyData pendingExternalLobby;
 
-    [RuntimeInitializeOnLoadMethod(
-        RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+    [SerializeField] private bool simulateLobbyCreationFailure;
+#endif
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStaticState()
     {
         launchArgumentsProcessed = false;
@@ -59,6 +61,14 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
     {
         if (!ValidateLobbyManager())
             return false;
+
+#if UNITY_EDITOR
+        if (simulateLobbyCreationFailure)
+        {
+            LobbyCreationFailed?.Invoke(EResult.k_EResultFail);
+            return true;
+        }
+#endif
 
         lobbyManager.Create();
         return true;
