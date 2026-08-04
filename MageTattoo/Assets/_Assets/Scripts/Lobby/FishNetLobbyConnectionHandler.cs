@@ -1,7 +1,10 @@
 using System;
-using UnityEngine;
+using System.Collections;
 using FishNet.Managing;
+using FishNet.Managing.Client;
+using FishNet.Managing.Server;
 using FishNet.Transporting;
+using UnityEngine;
 
 public class FishNetLobbyConnectionHandler : MonoBehaviour
 {
@@ -16,13 +19,18 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
     [SerializeField] private NetworkManager networkManager;
     [SerializeField] private FishySteamworks.FishySteamworks fishySteamworks;
 
+    [Header("Settings")]
+    [SerializeField, Min(1f)] private float stopTimeoutSeconds = 5f;
+
     public event Action HostStarted;
     public event Action ClientStarted;
     public event Action<string> ConnectionFailed;
     public event Action ConnectionsStopped;
 
     private ConnectionMode connectionMode = ConnectionMode.None;
+
     private LocalConnectionState serverState = LocalConnectionState.Stopped;
+
     private LocalConnectionState clientState = LocalConnectionState.Stopped;
 
     private bool isClientAuthenticated;
@@ -30,13 +38,25 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
     private bool hasReportedFailure;
     private bool isStopRequested;
 
+    private ServerManager subscribedServerManager;
+    private ClientManager subscribedClientManager;
+    private bool networkEventsSubscribed;
+
+    private Coroutine stopTimeoutCoroutine;
+
     private void OnEnable()
     {
-        SubscribeToNetworkEvents();
+        TrySubscribeToNetworkEvents();
+    }
+
+    private void Start()
+    {
+        TrySubscribeToNetworkEvents();
     }
 
     private void OnDisable()
     {
+        CancelStopTimeout();
         UnsubscribeFromNetworkEvents();
     }
 
@@ -49,10 +69,24 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
         PrepareConnection(ConnectionMode.Host);
 
         serverState = LocalConnectionState.Starting;
+
+        bool serverStartRequested = fishySteamworks.StartConnection(true);
+
+        if (!serverStartRequested)
+        {
+            serverState = LocalConnectionState.Stopped;
+            return false;
+        }
+
         clientState = LocalConnectionState.Starting;
 
-        fishySteamworks.StartConnection(true);
-        fishySteamworks.StartConnection(false);
+        bool clientStartRequested = fishySteamworks.StartConnection(false);
+
+        if (!clientStartRequested)
+        {
+            clientState = LocalConnectionState.Stopped;
+            return false;
+        }
 
         return true;
     }
@@ -74,7 +108,14 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
         clientState = LocalConnectionState.Starting;
 
         fishySteamworks.SetClientAddress(hostSteamId);
-        fishySteamworks.StartConnection(false);
+
+        bool clientStartRequested = fishySteamworks.StartConnection(false);
+
+        if (!clientStartRequested)
+        {
+            clientState = LocalConnectionState.Stopped;
+            return false;
+        }
 
         return true;
     }
@@ -82,24 +123,22 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
     // Detiene las conexiones activas y notifica al coordinador al finalizar.
     public void StopConnections()
     {
+        if (isStopRequested)
+            return;
+
         isStopRequested = true;
 
         if (fishySteamworks == null)
         {
-            serverState = LocalConnectionState.Stopped;
-            clientState = LocalConnectionState.Stopped;
-
-            TryCompleteStop();
+            ForceCompleteStopTracking();
             return;
         }
 
-        if (clientState != LocalConnectionState.Stopped)
-            fishySteamworks.StopConnection(false);
-
-        if (serverState != LocalConnectionState.Stopped)
-            fishySteamworks.StopConnection(true);
-
+        RequestTransportStop();
         TryCompleteStop();
+
+        if (isStopRequested)
+            StartStopTimeout();
     }
 
     private void HandleServerConnectionState(
@@ -132,8 +171,7 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
         ReportFailure(errorMessage);
     }
 
-    private void HandleClientConnectionState(
-        ClientConnectionStateArgs args)
+    private void HandleClientConnectionState(ClientConnectionStateArgs args)
     {
         clientState = args.ConnectionState;
 
@@ -170,23 +208,22 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
             return;
 
         isClientAuthenticated = true;
-
         TryCompleteConnection();
     }
 
     private void HandleClientTimeout()
     {
         if (connectionMode == ConnectionMode.None || isStopRequested)
+        {
             return;
+        }
 
         ReportFailure("FishNet client connection timed out.");
     }
 
     private void TryCompleteConnection()
     {
-        if (isConnectionConfirmed ||
-            hasReportedFailure ||
-            isStopRequested)
+        if (isConnectionConfirmed || hasReportedFailure || isStopRequested)
         {
             return;
         }
@@ -220,8 +257,7 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
 
     private bool IsClientReady()
     {
-        return clientState == LocalConnectionState.Started &&
-               isClientAuthenticated;
+        return clientState == LocalConnectionState.Started && isClientAuthenticated;
     }
 
     private bool CanStartConnection()
@@ -235,6 +271,12 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
         if (fishySteamworks == null)
         {
             Debug.LogError("FishySteamworks is null.");
+            return false;
+        }
+
+        if (!TrySubscribeToNetworkEvents())
+        {
+            Debug.LogError("FishNet managers are not initialized.");
             return false;
         }
 
@@ -252,11 +294,35 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
     {
         return connectionMode != ConnectionMode.None ||
                serverState != LocalConnectionState.Stopped ||
-               clientState != LocalConnectionState.Stopped;
+               clientState != LocalConnectionState.Stopped ||
+               IsServerManagerStarted() ||
+               IsClientManagerStarted();
+    }
+
+    private bool IsServerManagerStarted()
+    {
+        ServerManager serverManager = subscribedServerManager;
+
+        if (serverManager == null && networkManager != null)
+            serverManager = networkManager.ServerManager;
+
+        return serverManager != null && serverManager.Started;
+    }
+
+    private bool IsClientManagerStarted()
+    {
+        ClientManager clientManager = subscribedClientManager;
+
+        if (clientManager == null && networkManager != null)
+            clientManager = networkManager.ClientManager;
+
+        return clientManager != null && clientManager.Started;
     }
 
     private void PrepareConnection(ConnectionMode newConnectionMode)
     {
+        CancelStopTimeout();
+
         connectionMode = newConnectionMode;
 
         serverState = LocalConnectionState.Stopped;
@@ -274,22 +340,41 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
             return;
 
         hasReportedFailure = true;
-
         ConnectionFailed?.Invoke(errorMessage);
+    }
+
+    private void RequestTransportStop()
+    {
+        bool shouldStopClient = clientState != LocalConnectionState.Stopped || IsClientManagerStarted();
+
+        bool shouldStopServer = serverState != LocalConnectionState.Stopped || IsServerManagerStarted();
+
+        if (shouldStopClient)
+            fishySteamworks.StopConnection(false);
+
+        if (shouldStopServer)
+            fishySteamworks.StopConnection(true);
     }
 
     private void TryCompleteStop()
     {
-        bool connectionsAreStopped =
-            serverState == LocalConnectionState.Stopped &&
-            clientState == LocalConnectionState.Stopped;
+        bool connectionsAreStopped = serverState == LocalConnectionState.Stopped && clientState == LocalConnectionState.Stopped;
 
         if (!isStopRequested || !connectionsAreStopped)
             return;
 
+        CancelStopTimeout();
         ResetConnectionTracking();
 
         ConnectionsStopped?.Invoke();
+    }
+
+    private void ForceCompleteStopTracking()
+    {
+        serverState = LocalConnectionState.Stopped;
+        clientState = LocalConnectionState.Stopped;
+
+        TryCompleteStop();
     }
 
     private void ResetConnectionTracking()
@@ -305,28 +390,92 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
         isStopRequested = false;
     }
 
-    private void SubscribeToNetworkEvents()
+    private void StartStopTimeout()
     {
-        if (networkManager == null)
+        CancelStopTimeout();
+
+        stopTimeoutCoroutine = StartCoroutine(HandleStopTimeout());
+    }
+
+    private IEnumerator HandleStopTimeout()
+    {
+        float timeout = Mathf.Max(1f, stopTimeoutSeconds);
+
+        yield return new WaitForSecondsRealtime(timeout);
+
+        stopTimeoutCoroutine = null;
+
+        if (!isStopRequested)
+            yield break;
+
+        Debug.LogError(
+            "FishNet connection stop timed out. " +
+            "Connection tracking will be reset."
+        );
+
+        if (fishySteamworks != null)
         {
-            Debug.LogError("NetworkManager is null.");
-            return;
+            fishySteamworks.StopConnection(false);
+            fishySteamworks.StopConnection(true);
         }
 
-        networkManager.ServerManager.OnServerConnectionState += HandleServerConnectionState;
-        networkManager.ClientManager.OnClientConnectionState += HandleClientConnectionState;
-        networkManager.ClientManager.OnAuthenticated += HandleClientAuthenticated;
-        networkManager.ClientManager.OnClientTimeOut += HandleClientTimeout;
+        ForceCompleteStopTracking();
+    }
+
+    private void CancelStopTimeout()
+    {
+        if (stopTimeoutCoroutine == null)
+            return;
+
+        StopCoroutine(stopTimeoutCoroutine);
+        stopTimeoutCoroutine = null;
+    }
+
+    private bool TrySubscribeToNetworkEvents()
+    {
+        if (networkEventsSubscribed)
+            return true;
+
+        if (networkManager == null)
+            return false;
+
+        ServerManager serverManager = networkManager.ServerManager;
+        ClientManager clientManager = networkManager.ClientManager;
+
+        if (serverManager == null || clientManager == null)
+            return false;
+
+        serverManager.OnServerConnectionState += HandleServerConnectionState;
+        clientManager.OnClientConnectionState += HandleClientConnectionState;
+        clientManager.OnAuthenticated += HandleClientAuthenticated;
+        clientManager.OnClientTimeOut += HandleClientTimeout;
+
+        subscribedServerManager = serverManager;
+        subscribedClientManager = clientManager;
+        networkEventsSubscribed = true;
+
+        return true;
     }
 
     private void UnsubscribeFromNetworkEvents()
     {
-        if (networkManager == null)
+        if (!networkEventsSubscribed)
             return;
 
-        networkManager.ServerManager.OnServerConnectionState -= HandleServerConnectionState;
-        networkManager.ClientManager.OnClientConnectionState -= HandleClientConnectionState;
-        networkManager.ClientManager.OnAuthenticated -= HandleClientAuthenticated;
-        networkManager.ClientManager.OnClientTimeOut -= HandleClientTimeout;
+        if (subscribedServerManager != null)
+        {
+            subscribedServerManager.OnServerConnectionState -= HandleServerConnectionState;
+        }
+
+        if (subscribedClientManager != null)
+        {
+            subscribedClientManager.OnClientConnectionState -= HandleClientConnectionState;
+            subscribedClientManager.OnAuthenticated -= HandleClientAuthenticated;
+            subscribedClientManager.OnClientTimeOut -= HandleClientTimeout;
+        }
+
+        subscribedServerManager = null;
+        subscribedClientManager = null;
+        networkEventsSubscribed = false;
     }
 }

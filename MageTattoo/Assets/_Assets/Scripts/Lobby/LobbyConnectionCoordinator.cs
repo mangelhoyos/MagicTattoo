@@ -144,9 +144,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleHostLobbyCreated()
     {
-        if (!IsExpectedState(
-                LobbyConnectionState.CreatingLobby,
-                "Lobby creation callback"))
+        if (!IsExpectedState(LobbyConnectionState.CreatingLobby,"Lobby creation callback"))
         {
             return;
         }
@@ -161,9 +159,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleLobbyCreationFailed(EResult result)
     {
-        if (!IsExpectedState(
-                LobbyConnectionState.CreatingLobby,
-                "Lobby creation failure"))
+        if (!IsExpectedState(LobbyConnectionState.CreatingLobby,"Lobby creation failure"))
         {
             return;
         }
@@ -175,9 +171,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleClientLobbyEntered(string hostSteamId)
     {
-        if (!IsExpectedState(
-                LobbyConnectionState.JoiningLobby,
-                "Lobby entered callback"))
+        if (!IsExpectedState(LobbyConnectionState.JoiningLobby,"Lobby entered callback"))
         {
             return;
         }
@@ -192,9 +186,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleLobbyJoinFailed(EChatRoomEnterResponse response)
     {
-        if (!IsExpectedState(
-                LobbyConnectionState.JoiningLobby,
-                "Lobby join failure"))
+        if (!IsExpectedState(LobbyConnectionState.JoiningLobby,"Lobby join failure"))
         {
             return;
         }
@@ -206,9 +198,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleLobbyValidationFailed(string errorMessage)
     {
-        if (!IsExpectedState(
-                LobbyConnectionState.JoiningLobby,
-                "Lobby validation failure"))
+        if (!IsExpectedState(LobbyConnectionState.JoiningLobby,"Lobby validation failure"))
         {
             return;
         }
@@ -218,8 +208,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleSteamLobbyLeft()
     {
-        if (state == LobbyConnectionState.Idle ||
-            state == LobbyConnectionState.Disconnecting)
+        if (state == LobbyConnectionState.Idle || state == LobbyConnectionState.Disconnecting)
         {
             return;
         }
@@ -229,8 +218,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleAskedToLeave()
     {
-        if (state == LobbyConnectionState.Idle ||
-            state == LobbyConnectionState.Disconnecting)
+        if (state == LobbyConnectionState.Idle || state == LobbyConnectionState.Disconnecting)
         {
             return;
         }
@@ -242,9 +230,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleHostStarted()
     {
-        if (!IsExpectedState(
-                LobbyConnectionState.StartingHost,
-                "Host started callback"))
+        if (!IsExpectedState(LobbyConnectionState.StartingHost,"Host started callback"))
         {
             return;
         }
@@ -255,9 +241,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleClientStarted()
     {
-        if (!IsExpectedState(
-                LobbyConnectionState.StartingClient,
-                "Client started callback"))
+        if (!IsExpectedState(LobbyConnectionState.StartingClient,"Client started callback"))
         {
             return;
         }
@@ -282,9 +266,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
 
     private void HandleFishNetConnectionsStopped()
     {
-        if (!IsExpectedState(
-                LobbyConnectionState.Disconnecting,
-                "FishNet stop callback"))
+        if (!IsExpectedState(LobbyConnectionState.Disconnecting,"FishNet stop callback"))
         {
             return;
         }
@@ -292,8 +274,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
         CompleteDisconnect();
     }
 
-    private bool TryBeginOperation(
-        LobbyConnectionState operationState)
+    private bool TryBeginOperation(LobbyConnectionState operationState)
     {
         if (!CanStartOperation() || !ValidateDependencies())
             return false;
@@ -333,9 +314,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
         return true;
     }
 
-    private bool IsExpectedState(
-        LobbyConnectionState expectedState,
-        string callbackName)
+    private bool IsExpectedState(LobbyConnectionState expectedState, string callbackName)
     {
         if (state == expectedState)
             return true;

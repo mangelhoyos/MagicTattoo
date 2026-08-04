@@ -79,7 +79,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
     {
         LobbyData targetLobby = lobbyInvite.ToLobby;
 
-        if (targetLobby == null)
+        if (!targetLobby.IsValid)
         {
             Debug.LogWarning("The received lobby invite is not valid.");
             return false;
@@ -95,7 +95,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
         if (!ValidateLobbyManager())
             return false;
 
-        if (cachedLobby == null)
+        if (!cachedLobby.IsValid)
         {
             Debug.LogWarning("No existing lobby to join.");
             return false;
@@ -111,7 +111,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
         if (!ValidateLobbyManager())
             return false;
 
-        if (lobby == null || !lobby.IsValid)
+        if (!lobby.IsValid)
         {
             Debug.LogWarning("The external lobby is not valid.");
             return false;
@@ -124,17 +124,16 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
     }
 
     // Entrega al coordinador una solicitud externa pendiente una sola vez.
-    public bool TryConsumeExternalLobbyJoinRequest(
-        out LobbyData lobby)
+    public bool TryConsumeExternalLobbyJoinRequest(out LobbyData lobby)
     {
-        if (pendingExternalLobby == null)
+        if (!pendingExternalLobby.IsValid)
         {
-            lobby = null;
+            lobby = default;
             return false;
         }
 
         lobby = pendingExternalLobby;
-        pendingExternalLobby = null;
+        pendingExternalLobby = default;
 
         return true;
     }
@@ -143,7 +142,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
     public void LeaveLobby()
     {
         ClearCachedLobby();
-        pendingExternalLobby = null;
+        pendingExternalLobby = default;
 
         if (!ValidateLobbyManager())
             return;
@@ -217,16 +216,13 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
 
     private void QueueExternalLobbyJoinRequest(LobbyData lobby)
     {
-        if (lobby == null || !lobby.IsValid)
+        if (!lobby.IsValid)
         {
-            Debug.LogWarning(
-                "Steam requested an invalid lobby."
-            );
-
+            Debug.LogWarning("Steam requested an invalid lobby.");
             return;
         }
 
-        if (pendingExternalLobby != null)
+        if (pendingExternalLobby.IsValid)
         {
             if (pendingExternalLobby != lobby)
             {
@@ -253,10 +249,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
 
         for (int i = 0; i < arguments.Length; i++)
         {
-            if (!string.Equals(
-                    arguments[i],
-                    CONNECT_LOBBY_ARGUMENT,
-                    StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(arguments[i], CONNECT_LOBBY_ARGUMENT, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -274,7 +267,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
 
             LobbyData lobby = LobbyData.Get(arguments[i + 1]);
 
-            if (lobby == null || !lobby.IsValid)
+            if (!lobby.IsValid)
             {
                 Debug.LogWarning(
                     "Steam provided an invalid +connect_lobby argument."
@@ -299,7 +292,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
 
     private void ClearCachedLobby()
     {
-        cachedLobby = null;
+        cachedLobby = default;
     }
 
     private void SubscribeToLobbyEvents()
