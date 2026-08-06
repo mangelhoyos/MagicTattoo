@@ -1,12 +1,15 @@
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PlayerSteamUIHandler : MonoBehaviour
+public class PlayerSteamUIHandler : NetworkBehaviour
 {
     [SerializeField] PlayerSteamDataHolder playerSteamDataHolder;
     [SerializeField] TMP_Text playerNameTextField;
     [SerializeField] RawImage playerAvatarImage;
+
 
     private void Awake()
     {
@@ -15,12 +18,18 @@ public class PlayerSteamUIHandler : MonoBehaviour
 
     private void OnEnable()
     {
-        playerSteamDataHolder.OnOwnerSteamDataRetrieved += HandleSteamDataRetrieved;
+        playerSteamDataHolder.OnSteamDataRetrieved += HandleSteamDataRetrieved;
+
+        //Check initial values for new players
+        SteamUserData data = playerSteamDataHolder.GetPlayerInfo();
+
+        if (data.userId != 0 && data.avatarTexture != null)
+            HandleSteamDataRetrieved(data);
     }
 
     private void OnDisable()
     {
-        playerSteamDataHolder.OnOwnerSteamDataRetrieved -= HandleSteamDataRetrieved;
+        playerSteamDataHolder.OnSteamDataRetrieved -= HandleSteamDataRetrieved;
     }
 
     void SetUIToDefault()

@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class PlayerSteamDataHolder : NetworkBehaviour
 {
-    public event Action<SteamUserData> OnOwnerSteamDataRetrieved;
+    public event Action<SteamUserData> OnSteamDataRetrieved;
 
     private const int MAXUSERNAMELENGTH = 64;
 
@@ -103,8 +103,8 @@ public class PlayerSteamDataHolder : NetworkBehaviour
                 avatarTexture = texture
             };
 
-            if (IsOwner)
-                OnOwnerSteamDataRetrieved?.Invoke(PlayerData);
+            
+            OnSteamDataRetrieved?.Invoke(PlayerData);
         });
     }
 
