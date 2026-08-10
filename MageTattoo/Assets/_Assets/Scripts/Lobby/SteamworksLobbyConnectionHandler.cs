@@ -13,6 +13,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
 
     [Header("Dependencies")]
     [SerializeField] private LobbyManager lobbyManager;
+    private LobbyManager subscribedLobbyManager;
 
     public event Action HostLobbyCreated;
     public event Action<EResult> LobbyCreationFailed;
@@ -21,6 +22,7 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
     public event Action<EChatRoomEnterResponse> LobbyJoinFailed;
     public event Action<string> LobbyValidationFailed;
 
+    public event Action<LobbyInvite> LobbyInviteReceived;
     public event Action LobbyLeft;
     public event Action AskedToLeave;
 
@@ -39,16 +41,30 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
         launchArgumentsProcessed = false;
     }
 
+    private void Awake()
+    { 
+        if (lobbyManager == null)
+        lobbyManager = FindFirstObjectByType<LobbyManager>();
+    }
+
     private void OnEnable()
     {
+        ResolveLobbyManager();
         SubscribeToLobbyEvents();
         SubscribeToOverlayEvents();
     }
 
     private void Start()
     {
+        if (lobbyManager == null)
+        {
+            ResolveLobbyManager();
+            SubscribeToLobbyEvents();
+        }
+
         ProcessLaunchArguments();
     }
+
 
     private void OnDisable()
     {
@@ -198,6 +214,11 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
         LobbyJoinFailed?.Invoke(response);
     }
 
+    private void HandleLobbyInvite(LobbyInvite lobbyInvite)
+    {
+        LobbyInviteReceived?.Invoke(lobbyInvite);
+    }
+
     private void HandleLobbyLeft()
     {
         ClearCachedLobby();
@@ -295,10 +316,21 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
         cachedLobby = default;
     }
 
+    private void ResolveLobbyManager()
+    {
+        if (lobbyManager == null)
+            lobbyManager = FindFirstObjectByType<LobbyManager>();
+    }
+
     private void SubscribeToLobbyEvents()
     {
         if (lobbyManager == null)
             return;
+
+        if (subscribedLobbyManager == lobbyManager)
+            return;
+
+        UnsubscribeFromLobbyEvents();
 
         lobbyManager.evtCreated.AddListener(HandleLobbyCreated);
         lobbyManager.evtCreateFailed.AddListener(HandleLobbyCreationFailed);
@@ -306,11 +338,14 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
         lobbyManager.evtEnterFailed.AddListener(HandleLobbyJoinFailed);
         lobbyManager.evtLeave.AddListener(HandleLobbyLeft);
         lobbyManager.evtAskedToLeave.AddListener(HandleAskedToLeave);
+        lobbyManager.evtLobbyInvite.AddListener(HandleLobbyInvite);
+
+        subscribedLobbyManager = lobbyManager;
     }
 
     private void UnsubscribeFromLobbyEvents()
     {
-        if (lobbyManager == null)
+        if (subscribedLobbyManager == null)
             return;
 
         lobbyManager.evtCreated.RemoveListener(HandleLobbyCreated);
@@ -319,6 +354,9 @@ public class SteamworksLobbyConnectionHandler : MonoBehaviour
         lobbyManager.evtEnterFailed.RemoveListener(HandleLobbyJoinFailed);
         lobbyManager.evtLeave.RemoveListener(HandleLobbyLeft);
         lobbyManager.evtAskedToLeave.RemoveListener(HandleAskedToLeave);
+        lobbyManager.evtLobbyInvite.RemoveListener(HandleLobbyInvite);
+
+        subscribedLobbyManager = null;
     }
 
     private void SubscribeToOverlayEvents()
