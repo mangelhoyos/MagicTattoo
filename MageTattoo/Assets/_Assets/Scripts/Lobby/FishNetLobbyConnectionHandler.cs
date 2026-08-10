@@ -51,6 +51,7 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
 
     private void Start()
     {
+        ResolveDependencies();
         TrySubscribeToNetworkEvents();
     }
 
@@ -58,6 +59,18 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
     {
         CancelStopTimeout();
         UnsubscribeFromNetworkEvents();
+    }
+
+    private void ResolveDependencies()
+    {
+        if (networkManager == null)
+            networkManager = FindFirstObjectByType<NetworkManager>();
+
+        if (fishySteamworks == null)
+        {
+            fishySteamworks =
+                FindFirstObjectByType<FishySteamworks.FishySteamworks>();
+        }
     }
 
     // Inicia el servidor y el cliente local solicitados por el coordinador.
@@ -262,6 +275,8 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
 
     private bool CanStartConnection()
     {
+        ResolveDependencies();
+
         if (networkManager == null)
         {
             Debug.LogError("NetworkManager is null.");

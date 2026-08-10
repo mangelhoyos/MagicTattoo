@@ -395,6 +395,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
         steamworksHandler.LobbyLeft += HandleSteamLobbyLeft;
         steamworksHandler.AskedToLeave += HandleAskedToLeave;
         steamworksHandler.ExternalLobbyJoinRequested += HandleExternalLobbyJoinRequested;
+        steamworksHandler.LobbyInviteReceived += ReceiveLobbyInvite;
     }
 
     private void UnsubscribeFromSteamworksEvents()
@@ -410,6 +411,7 @@ public class LobbyConnectionCoordinator : MonoBehaviour
         steamworksHandler.LobbyLeft -= HandleSteamLobbyLeft;
         steamworksHandler.AskedToLeave -= HandleAskedToLeave;
         steamworksHandler.ExternalLobbyJoinRequested -= HandleExternalLobbyJoinRequested;
+        steamworksHandler.LobbyInviteReceived -= ReceiveLobbyInvite;
     }
 
     private void SubscribeToFishNetEvents()
