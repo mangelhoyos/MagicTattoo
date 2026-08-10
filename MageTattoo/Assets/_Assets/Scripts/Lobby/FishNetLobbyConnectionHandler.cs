@@ -64,7 +64,10 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
     private void ResolveDependencies()
     {
         if (networkManager == null)
+        {
+            UnsubscribeFromNetworkEvents();
             networkManager = FindFirstObjectByType<NetworkManager>();
+        }
 
         if (fishySteamworks == null)
         {
@@ -448,25 +451,28 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
 
     private bool TrySubscribeToNetworkEvents()
     {
-        if (networkEventsSubscribed)
+        if (networkManager == null ||
+            networkManager.ServerManager == null ||
+            networkManager.ClientManager == null)
+        {
+            return false;
+        }
+
+        if (networkEventsSubscribed &&
+            subscribedServerManager == networkManager.ServerManager &&
+            subscribedClientManager == networkManager.ClientManager)
+        {
             return true;
+        }
 
-        if (networkManager == null)
-            return false;
+        UnsubscribeFromNetworkEvents();
 
-        ServerManager serverManager = networkManager.ServerManager;
-        ClientManager clientManager = networkManager.ClientManager;
+        subscribedServerManager = networkManager.ServerManager;
+        subscribedClientManager = networkManager.ClientManager;
+        subscribedServerManager.OnServerConnectionState += HandleServerConnectionState;
+        subscribedClientManager.OnClientConnectionState += HandleClientConnectionState;
+        subscribedClientManager.OnAuthenticated += HandleClientAuthenticated;
 
-        if (serverManager == null || clientManager == null)
-            return false;
-
-        serverManager.OnServerConnectionState += HandleServerConnectionState;
-        clientManager.OnClientConnectionState += HandleClientConnectionState;
-        clientManager.OnAuthenticated += HandleClientAuthenticated;
-        clientManager.OnClientTimeOut += HandleClientTimeout;
-
-        subscribedServerManager = serverManager;
-        subscribedClientManager = clientManager;
         networkEventsSubscribed = true;
 
         return true;
@@ -474,9 +480,6 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
 
     private void UnsubscribeFromNetworkEvents()
     {
-        if (!networkEventsSubscribed)
-            return;
-
         if (subscribedServerManager != null)
         {
             subscribedServerManager.OnServerConnectionState -= HandleServerConnectionState;
@@ -486,7 +489,6 @@ public class FishNetLobbyConnectionHandler : MonoBehaviour
         {
             subscribedClientManager.OnClientConnectionState -= HandleClientConnectionState;
             subscribedClientManager.OnAuthenticated -= HandleClientAuthenticated;
-            subscribedClientManager.OnClientTimeOut -= HandleClientTimeout;
         }
 
         subscribedServerManager = null;
