@@ -9,6 +9,7 @@ public class GameConnectionHandler : MonoBehaviour
 {
     [Header("Settings")]
     [SerializeField, Min(0f)] private float returnToLobbyDelay = 5f;
+    [SerializeField, Min(1f)] private float networkShutdownTimeout = 5f;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onConnectionLost;
@@ -19,11 +20,17 @@ public class GameConnectionHandler : MonoBehaviour
     private LobbyManager lobbyManager;
 
     private Coroutine returnToLobbyCoroutine;
+    private Coroutine networkShutdownCoroutine;
 
     private bool isReturningToLobby;
     private bool connectionIssueReported;
+
     private bool networkEventsSubscribed;
     private bool lobbyEventsSubscribed;
+
+    private bool isWaitingForNetworkShutdown;
+    private bool clientShutdownComplete;
+    private bool serverShutdownComplete;
 
     private void OnEnable()
     {
@@ -39,7 +46,9 @@ public class GameConnectionHandler : MonoBehaviour
     {
         UnsubscribeFromNetworkEvents();
         UnsubscribeFromLobbyEvents();
+
         CancelReturnToLobby();
+        CancelNetworkShutdown();
     }
 
     // Permite abandonar voluntariamente la partida desde la UI.
@@ -55,19 +64,28 @@ public class GameConnectionHandler : MonoBehaviour
         );
 
         CancelReturnToLobby();
-        CleanupConnection();
-
-        onReturnToLobby?.Invoke();
+        BeginNetworkShutdown();
     }
 
     private void HandleClientConnectionState(
         ClientConnectionStateArgs args)
     {
-        if (isReturningToLobby ||
-            args.ConnectionState != LocalConnectionState.Stopped)
+        if (args.ConnectionState != LocalConnectionState.Stopped)
+            return;
+
+        if (isWaitingForNetworkShutdown)
         {
+            clientShutdownComplete = true;
+
+            Debug.Log(
+                "[GameConnection] FishNet client shutdown completed."
+            );
+
             return;
         }
+
+        if (isReturningToLobby)
+            return;
 
         ReportConnectionIssue(
             "FishNet client connection stopped unexpectedly."
@@ -77,11 +95,22 @@ public class GameConnectionHandler : MonoBehaviour
     private void HandleServerConnectionState(
         ServerConnectionStateArgs args)
     {
-        if (isReturningToLobby ||
-            args.ConnectionState != LocalConnectionState.Stopped)
+        if (args.ConnectionState != LocalConnectionState.Stopped)
+            return;
+
+        if (isWaitingForNetworkShutdown)
         {
+            serverShutdownComplete = true;
+
+            Debug.Log(
+                "[GameConnection] FishNet server shutdown completed."
+            );
+
             return;
         }
+
+        if (isReturningToLobby)
+            return;
 
         ReportConnectionIssue(
             "FishNet server stopped unexpectedly."
@@ -139,8 +168,7 @@ public class GameConnectionHandler : MonoBehaviour
 
         onConnectionLost?.Invoke();
 
-        returnToLobbyCoroutine =
-            StartCoroutine(ReturnToLobbyAfterDelay());
+        returnToLobbyCoroutine = StartCoroutine(ReturnToLobbyAfterDelay());
     }
 
     private IEnumerator ReturnToLobbyAfterDelay()
@@ -148,50 +176,127 @@ public class GameConnectionHandler : MonoBehaviour
         yield return new WaitForSecondsRealtime(returnToLobbyDelay);
 
         returnToLobbyCoroutine = null;
+
+        if (isReturningToLobby)
+            yield break;
+
         isReturningToLobby = true;
 
+        LobbyReturnContext.SetConnectionError();
+
+        BeginNetworkShutdown();
+    }
+
+    private void BeginNetworkShutdown()
+    {
+        if (networkShutdownCoroutine != null)
+            return;
+
+        networkShutdownCoroutine =
+            StartCoroutine(ShutdownNetworkAndReturnToLobby());
+    }
+
+    private IEnumerator ShutdownNetworkAndReturnToLobby()
+    {
+        TryInitialize();
+
+        bool clientWasStarted =
+            networkManager?.ClientManager != null &&
+            networkManager.ClientManager.Started;
+
+        bool serverWasStarted = networkManager?.ServerManager != null && networkManager.ServerManager.Started;
+
+        clientShutdownComplete = !clientWasStarted;
+        serverShutdownComplete = !serverWasStarted;
+
+        isWaitingForNetworkShutdown = true;
+
         Debug.Log(
-            "[GameConnection] Returning to lobby after connection loss."
+            $"[GameConnection] Starting network shutdown. " +
+            $"Client active: {clientWasStarted}, " +
+            $"Server active: {serverWasStarted}."
         );
 
-        CleanupConnection();
+        if (fishySteamworks != null)
+        {
+            if (clientWasStarted)
+                fishySteamworks.StopConnection(false);
+
+            if (serverWasStarted)
+                fishySteamworks.StopConnection(true);
+        }
+        else if (clientWasStarted || serverWasStarted)
+        {
+            Debug.LogError(
+                "[GameConnection] FishySteamworks was not found during network shutdown."
+            );
+        }
+
+        float elapsedTime = 0f;
+
+        while ((!clientShutdownComplete ||
+                !serverShutdownComplete) &&
+               elapsedTime < networkShutdownTimeout)
+        {
+            elapsedTime += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        bool shutdownTimedOut = !clientShutdownComplete || !serverShutdownComplete;
+
+        if (shutdownTimedOut)
+        {
+            Debug.LogWarning(
+                "[GameConnection] Network shutdown timed out. " +
+                "Returning to the lobby anyway."
+            );
+
+            if (fishySteamworks != null)
+            {
+                if (!clientShutdownComplete)
+                    fishySteamworks.StopConnection(false);
+
+                if (!serverShutdownComplete)
+                    fishySteamworks.StopConnection(true);
+            }
+        }
+        else
+        {
+            Debug.Log(
+                "[GameConnection] Network shutdown completed."
+            );
+        }
+
+        isWaitingForNetworkShutdown = false;
+
+        // Da un frame a FishNet para finalizar su limpieza interna.
+        yield return null;
+
+        if (lobbyManager != null && lobbyManager.HasLobby)
+        {
+            Debug.Log(
+                "[GameConnection] Leaving Steam lobby."
+            );
+
+            lobbyManager.Leave();
+        }
+
+        networkShutdownCoroutine = null;
+
+        Debug.Log(
+            "[GameConnection] Returning to lobby scene."
+        );
 
         onReturnToLobby?.Invoke();
     }
 
-    private void CleanupConnection()
-    {
-        if (fishySteamworks != null)
-        {
-            bool clientStarted =
-                networkManager?.ClientManager != null &&
-                networkManager.ClientManager.Started;
-
-            bool serverStarted =
-                networkManager?.ServerManager != null &&
-                networkManager.ServerManager.Started;
-
-            if (clientStarted)
-                fishySteamworks.StopConnection(false);
-
-            if (serverStarted)
-                fishySteamworks.StopConnection(true);
-        }
-
-        if (lobbyManager != null && lobbyManager.HasLobby)
-            lobbyManager.Leave();
-    }
-
     private void TryInitialize()
     {
-        networkManager ??=
-            FindFirstObjectByType<NetworkManager>();
+        networkManager ??= FindFirstObjectByType<NetworkManager>();
 
-        fishySteamworks ??=
-            FindFirstObjectByType<FishySteamworks.FishySteamworks>();
+        fishySteamworks ??= FindFirstObjectByType<FishySteamworks.FishySteamworks>();
 
-        lobbyManager ??=
-            FindFirstObjectByType<LobbyManager>();
+        lobbyManager ??= FindFirstObjectByType<LobbyManager>();
 
         SubscribeToNetworkEvents();
         SubscribeToLobbyEvents();
@@ -207,14 +312,9 @@ public class GameConnectionHandler : MonoBehaviour
             return;
         }
 
-        networkManager.ClientManager.OnClientConnectionState +=
-            HandleClientConnectionState;
-
-        networkManager.ClientManager.OnClientTimeOut +=
-            HandleClientTimeout;
-
-        networkManager.ServerManager.OnServerConnectionState +=
-            HandleServerConnectionState;
+        networkManager.ClientManager.OnClientConnectionState += HandleClientConnectionState;
+        networkManager.ClientManager.OnClientTimeOut += HandleClientTimeout;
+        networkManager.ServerManager.OnServerConnectionState += HandleServerConnectionState;
 
         networkEventsSubscribed = true;
     }
@@ -226,17 +326,13 @@ public class GameConnectionHandler : MonoBehaviour
 
         if (networkManager.ClientManager != null)
         {
-            networkManager.ClientManager.OnClientConnectionState -=
-                HandleClientConnectionState;
-
-            networkManager.ClientManager.OnClientTimeOut -=
-                HandleClientTimeout;
+            networkManager.ClientManager.OnClientConnectionState -= HandleClientConnectionState;
+            networkManager.ClientManager.OnClientTimeOut -= HandleClientTimeout;
         }
 
         if (networkManager.ServerManager != null)
         {
-            networkManager.ServerManager.OnServerConnectionState -=
-                HandleServerConnectionState;
+            networkManager.ServerManager.OnServerConnectionState -= HandleServerConnectionState;
         }
 
         networkEventsSubscribed = false;
@@ -271,5 +367,18 @@ public class GameConnectionHandler : MonoBehaviour
 
         StopCoroutine(returnToLobbyCoroutine);
         returnToLobbyCoroutine = null;
+    }
+
+    private void CancelNetworkShutdown()
+    {
+        if (networkShutdownCoroutine != null)
+        {
+            StopCoroutine(networkShutdownCoroutine);
+            networkShutdownCoroutine = null;
+        }
+
+        isWaitingForNetworkShutdown = false;
+        clientShutdownComplete = false;
+        serverShutdownComplete = false;
     }
 }
