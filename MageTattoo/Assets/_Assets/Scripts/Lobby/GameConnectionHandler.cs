@@ -1,14 +1,13 @@
-using System.Collections;
+using UnityEngine;
 using FishNet.Managing;
+using System.Collections;
+using UnityEngine.Events;
 using FishNet.Transporting;
 using HeathenEngineering.SteamworksIntegration;
-using UnityEngine;
-using UnityEngine.Events;
 
 public class GameConnectionHandler : MonoBehaviour
 {
     [Header("Settings")]
-    [SerializeField, Min(0f)] private float returnToLobbyDelay = 5f;
     [SerializeField, Min(1f)] private float networkShutdownTimeout = 5f;
 
     [Header("Events")]
@@ -19,7 +18,6 @@ public class GameConnectionHandler : MonoBehaviour
     private FishySteamworks.FishySteamworks fishySteamworks;
     private LobbyManager lobbyManager;
 
-    private Coroutine returnToLobbyCoroutine;
     private Coroutine networkShutdownCoroutine;
 
     private bool isReturningToLobby;
@@ -46,8 +44,6 @@ public class GameConnectionHandler : MonoBehaviour
     {
         UnsubscribeFromNetworkEvents();
         UnsubscribeFromLobbyEvents();
-
-        CancelReturnToLobby();
         CancelNetworkShutdown();
     }
 
@@ -57,14 +53,11 @@ public class GameConnectionHandler : MonoBehaviour
         if (isReturningToLobby)
             return;
 
-        isReturningToLobby = true;
-
         Debug.Log(
             "[GameConnection] Player requested to leave the game."
         );
 
-        CancelReturnToLobby();
-        BeginNetworkShutdown();
+        BeginReturnToLobby(false);
     }
 
     private void HandleClientConnectionState(
@@ -158,31 +151,21 @@ public class GameConnectionHandler : MonoBehaviour
             $"[GameConnection] {errorMessage}"
         );
 
-        BeginConnectionLostSequence();
+        BeginReturnToLobby(true);
     }
 
-    private void BeginConnectionLostSequence()
+    private void BeginReturnToLobby(bool connectionError)
     {
-        if (returnToLobbyCoroutine != null)
-            return;
-
-        onConnectionLost?.Invoke();
-
-        returnToLobbyCoroutine = StartCoroutine(ReturnToLobbyAfterDelay());
-    }
-
-    private IEnumerator ReturnToLobbyAfterDelay()
-    {
-        yield return new WaitForSecondsRealtime(returnToLobbyDelay);
-
-        returnToLobbyCoroutine = null;
-
         if (isReturningToLobby)
-            yield break;
+            return;
 
         isReturningToLobby = true;
 
-        LobbyReturnContext.SetConnectionError();
+        if (connectionError)
+        {
+            LobbyReturnContext.SetConnectionError();
+            onConnectionLost?.Invoke();
+        }
 
         BeginNetworkShutdown();
     }
@@ -192,8 +175,7 @@ public class GameConnectionHandler : MonoBehaviour
         if (networkShutdownCoroutine != null)
             return;
 
-        networkShutdownCoroutine =
-            StartCoroutine(ShutdownNetworkAndReturnToLobby());
+        networkShutdownCoroutine = StartCoroutine(ShutdownNetworkAndReturnToLobby());
     }
 
     private IEnumerator ShutdownNetworkAndReturnToLobby()
@@ -204,7 +186,9 @@ public class GameConnectionHandler : MonoBehaviour
             networkManager?.ClientManager != null &&
             networkManager.ClientManager.Started;
 
-        bool serverWasStarted = networkManager?.ServerManager != null && networkManager.ServerManager.Started;
+        bool serverWasStarted =
+            networkManager?.ServerManager != null &&
+            networkManager.ServerManager.Started;
 
         clientShutdownComplete = !clientWasStarted;
         serverShutdownComplete = !serverWasStarted;
@@ -234,9 +218,7 @@ public class GameConnectionHandler : MonoBehaviour
 
         float elapsedTime = 0f;
 
-        while ((!clientShutdownComplete ||
-                !serverShutdownComplete) &&
-               elapsedTime < networkShutdownTimeout)
+        while ((!clientShutdownComplete || !serverShutdownComplete) && elapsedTime < networkShutdownTimeout)
         {
             elapsedTime += Time.unscaledDeltaTime;
             yield return null;
@@ -269,7 +251,6 @@ public class GameConnectionHandler : MonoBehaviour
 
         isWaitingForNetworkShutdown = false;
 
-        // Da un frame a FishNet para finalizar su limpieza interna.
         yield return null;
 
         if (lobbyManager != null && lobbyManager.HasLobby)
@@ -293,9 +274,7 @@ public class GameConnectionHandler : MonoBehaviour
     private void TryInitialize()
     {
         networkManager ??= FindFirstObjectByType<NetworkManager>();
-
         fishySteamworks ??= FindFirstObjectByType<FishySteamworks.FishySteamworks>();
-
         lobbyManager ??= FindFirstObjectByType<LobbyManager>();
 
         SubscribeToNetworkEvents();
@@ -358,15 +337,6 @@ public class GameConnectionHandler : MonoBehaviour
         lobbyManager.evtAskedToLeave.RemoveListener(HandleAskedToLeave);
 
         lobbyEventsSubscribed = false;
-    }
-
-    private void CancelReturnToLobby()
-    {
-        if (returnToLobbyCoroutine == null)
-            return;
-
-        StopCoroutine(returnToLobbyCoroutine);
-        returnToLobbyCoroutine = null;
     }
 
     private void CancelNetworkShutdown()
