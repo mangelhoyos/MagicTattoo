@@ -60,8 +60,7 @@ public class GameConnectionHandler : MonoBehaviour
         BeginReturnToLobby(false);
     }
 
-    private void HandleClientConnectionState(
-        ClientConnectionStateArgs args)
+    private void HandleClientConnectionState(ClientConnectionStateArgs args)
     {
         if (args.ConnectionState != LocalConnectionState.Stopped)
             return;
@@ -85,8 +84,7 @@ public class GameConnectionHandler : MonoBehaviour
         );
     }
 
-    private void HandleServerConnectionState(
-        ServerConnectionStateArgs args)
+    private void HandleServerConnectionState(ServerConnectionStateArgs args)
     {
         if (args.ConnectionState != LocalConnectionState.Stopped)
             return;
@@ -182,13 +180,8 @@ public class GameConnectionHandler : MonoBehaviour
     {
         TryInitialize();
 
-        bool clientWasStarted =
-            networkManager?.ClientManager != null &&
-            networkManager.ClientManager.Started;
-
-        bool serverWasStarted =
-            networkManager?.ServerManager != null &&
-            networkManager.ServerManager.Started;
+        bool clientWasStarted = networkManager?.ClientManager != null && networkManager.ClientManager.Started;
+        bool serverWasStarted = networkManager?.ServerManager != null && networkManager.ServerManager.Started;
 
         clientShutdownComplete = !clientWasStarted;
         serverShutdownComplete = !serverWasStarted;

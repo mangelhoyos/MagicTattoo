@@ -3479,6 +3479,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NetworkManager
       objectReference: {fileID: 0}
+    - target: {fileID: 4675756100384411037, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
+      propertyPath: _persistence
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9094382604252947287, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -3528,53 +3532,30 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9094382604252947287, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1093649422}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4396506649786205490, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6324767274082217761}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
 --- !u!114 &6324767274082217758 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7837145138945799087, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
   m_PrefabInstance: {fileID: 6324767274082217757}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6324767274082217759}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28b19962fe839804180bd02ce1a545f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FishySteamworks.FishySteamworks
---- !u!1 &6324767274082217759 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4396506649786205490, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
-  m_PrefabInstance: {fileID: 6324767274082217757}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &6324767274082217760 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4675756100384411037, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
   m_PrefabInstance: {fileID: 6324767274082217757}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6324767274082217759}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d2c95dfde7d73b54dbbdc23155d35d36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &6324767274082217761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6324767274082217759}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 211a9f6ec51ddc14f908f5acc0cd0423, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Spawning.PlayerSpawner
-  _playerPrefab: {fileID: 3864651143346529279, guid: d2298608ae1362640ab283f6f37b3cfe, type: 3}
-  _addToDefaultScene: 1
-  Spawns: []
 --- !u!4 &6324767274082217762 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9094382604252947287, guid: 482655e1fef55ab419f40d364684fba1, type: 3}
