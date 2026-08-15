@@ -1,10 +1,11 @@
-using UnityEngine;
-using FishNet.Object;
-using FishNet.Managing;
-using System.Collections;
 using FishNet.Connection;
+using FishNet.Managing;
 using FishNet.Managing.Scened;
+using FishNet.Object;
+using FishNet.Transporting;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class ScenePlayerSpawner : MonoBehaviour
 {
@@ -62,6 +63,7 @@ public class ScenePlayerSpawner : MonoBehaviour
             return;
 
         networkManager.SceneManager.OnClientPresenceChangeEnd += HandleClientPresenceChangeEnd;
+        networkManager.ServerManager.OnRemoteConnectionState += HandleRemoteConnectionState;
 
         sceneEventsSubscribed = true;
     }
@@ -72,6 +74,8 @@ public class ScenePlayerSpawner : MonoBehaviour
             return;
 
         networkManager.SceneManager.OnClientPresenceChangeEnd -= HandleClientPresenceChangeEnd;
+        networkManager.ServerManager.OnRemoteConnectionState -= HandleRemoteConnectionState;
+
         sceneEventsSubscribed = false;
     }
 
@@ -84,6 +88,19 @@ public class ScenePlayerSpawner : MonoBehaviour
             return;
 
         SpawnPlayer(args.Connection);
+    }
+
+    private void HandleRemoteConnectionState(NetworkConnection connection, RemoteConnectionStateArgs args)
+    {
+        if (args.ConnectionState != RemoteConnectionState.Stopped)
+            return;
+
+        spawnedClientIds.Remove(connection.ClientId);
+
+        Debug.Log(
+            $"[ScenePlayerSpawner] Cleared spawn tracking for client " +
+            $"{connection.ClientId} after disconnect."
+        );
     }
 
     private IEnumerator TrySpawnExistingConnections()
