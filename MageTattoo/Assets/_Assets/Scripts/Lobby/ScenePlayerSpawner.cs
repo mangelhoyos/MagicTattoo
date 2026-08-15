@@ -81,11 +81,20 @@ public class ScenePlayerSpawner : MonoBehaviour
 
     private void HandleClientPresenceChangeEnd(ClientPresenceChangeEventArgs args)
     {
-        if (!args.Added)
-            return;
-
         if (args.Scene != gameObject.scene)
             return;
+
+        if (!args.Added)
+        {
+            spawnedClientIds.Remove(args.Connection.ClientId);
+
+            Debug.Log(
+                $"[ScenePlayerSpawner] Cleared spawn tracking for client " +
+                $"{args.Connection.ClientId} after leaving the scene."
+            );
+
+            return;
+        }
 
         SpawnPlayer(args.Connection);
     }
