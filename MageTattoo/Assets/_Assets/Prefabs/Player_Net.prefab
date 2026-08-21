@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3864651143346529279}
   - component: {fileID: 2903725864388003313}
   - component: {fileID: 5622560637310875423}
+  - component: {fileID: 1738462812941391740}
   m_Layer: 0
   m_Name: Player_Net
   m_TagString: Untagged
@@ -155,6 +156,19 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 3864651143346529279}
   _networkObjectCache: {fileID: 0}
+--- !u!114 &1738462812941391740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3986224893000818657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172e26754109ba64698d9767a0e90357, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MovementController
+  movementAction: {fileID: -1680190386980627800, guid: 289c1b55c9541489481df5cc06664110, type: 3}
 --- !u!1 &4474364132529227089
 GameObject:
   m_ObjectHideFlags: 0
