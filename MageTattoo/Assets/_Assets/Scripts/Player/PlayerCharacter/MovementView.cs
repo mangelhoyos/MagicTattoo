@@ -1,6 +1,7 @@
 using UnityEngine;
+using FishNet.Object;
 
-public class MovementView : MonoBehaviour
+public class MovementView : NetworkBehaviour
 {
     [Header("References")]
     [SerializeField] private MovementController movementController;
@@ -20,8 +21,16 @@ public class MovementView : MonoBehaviour
     private float movementSpeed;
     private float verticalVelocity;
 
-    private void Start()
+    public override void OnStartClient()
     {
+        if (!base.IsOwner)
+        {
+            movementController.enabled = false;
+            return;
+        }
+
+        movementController.enabled = true;
+
         movementModel = movementController.GetMovementModel();
 
         currentDirection = movementModel.Direction;
@@ -30,22 +39,14 @@ public class MovementView : MonoBehaviour
         SubscribeToModel();
     }
 
-    private void OnEnable()
-    {
-        if (movementModel == null)
-            return;
-
-        SubscribeToModel();
-    }
-
-    private void OnDisable()
+    public override void OnStopClient()
     {
         UnsubscribeFromModel();
     }
 
     private void Update()
     {
-        if (movementModel == null)
+        if (!base.IsOwner || movementModel == null)
             return;
 
         UpdateGravity();
@@ -79,10 +80,7 @@ public class MovementView : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.LookRotation(horizontalDirection);
 
-        visualTransform.rotation = Quaternion.Slerp(
-            visualTransform.rotation,
-            targetRotation,
-            rotationSpeed * Time.deltaTime
+        visualTransform.rotation = Quaternion.Slerp(visualTransform.rotation, targetRotation, rotationSpeed * Time.deltaTime
         );
     }
 
