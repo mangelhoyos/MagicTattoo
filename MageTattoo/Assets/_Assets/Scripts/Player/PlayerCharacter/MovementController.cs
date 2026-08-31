@@ -13,8 +13,10 @@ public class MovementController : NetworkBehaviour
         Model = new MovementModel();
     }
 
-    private void OnEnable()
+    public override void OnStartClient()
     {
+        base.OnStartClient();
+
         if (!IsOwner)
             return;
 
@@ -24,8 +26,10 @@ public class MovementController : NetworkBehaviour
         movementAction.action.Enable();
     }
 
-    private void OnDisable()
+    public override void OnStopClient()
     {
+        base.OnStopClient();
+
         if (!IsOwner)
             return;
 
