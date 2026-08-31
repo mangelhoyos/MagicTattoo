@@ -1,7 +1,8 @@
+using FishNet.Object;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class MovementController : MonoBehaviour
+public class MovementController : NetworkBehaviour
 {
     [SerializeField] private InputActionReference movementAction;
 
@@ -14,6 +15,9 @@ public class MovementController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!IsOwner)
+            return;
+
         movementAction.action.performed += OnMovementInput;
         movementAction.action.canceled += OnMovementInput;
 
@@ -22,6 +26,9 @@ public class MovementController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (!IsOwner)
+            return;
+
         movementAction.action.performed -= OnMovementInput;
         movementAction.action.canceled -= OnMovementInput;
 
