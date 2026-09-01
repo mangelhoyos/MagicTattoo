@@ -10,7 +10,7 @@ public class MovementModel
 
     public MovementModel()
     {
-        Velocity = 5;
+        Velocity = 2.5f;
         Direction = Vector3.zero;
     }
 
