@@ -1,11 +1,13 @@
 using UnityEngine;
+using FishNet.Object;
+using FishNet.Component.Animating;
 
-public class MovementAnimationView : MonoBehaviour
+public class MovementAnimationView : NetworkBehaviour
 {
     [Header("References")]
     [SerializeField] private MovementController movementController;
     [SerializeField] private PlayerVisualSelectorView visualSelectorView;
-    private Animator animator;
+    [SerializeField] private NetworkAnimator networkAnimator;
 
     [Header("Animation States")]
     [SerializeField] private string idleStateName = "Idle";
@@ -27,9 +29,15 @@ public class MovementAnimationView : MonoBehaviour
         movementStateHash = Animator.StringToHash(movementStateName);
     }
 
-    private void Start()
+    public override void OnStartNetwork()
     {
-        animator = visualSelectorView.SelectedAnimator;
+        networkAnimator.SetAnimator(visualSelectorView.SelectedAnimator);
+    }
+
+    public override void OnStartClient()
+    {
+        if (!IsOwner)
+            return;
 
         movementModel = movementController.GetMovementModel();
 
@@ -39,15 +47,7 @@ public class MovementAnimationView : MonoBehaviour
         UpdateAnimation(true);
     }
 
-    private void OnEnable()
-    {
-        if (movementModel == null)
-            return;
-
-        SubscribeToModel();
-    }
-
-    private void OnDisable()
+    public override void OnStopClient()
     {
         UnsubscribeFromModel();
     }
@@ -72,11 +72,11 @@ public class MovementAnimationView : MonoBehaviour
 
         if (immediate)
         {
-            animator.Play(stateHash);
+            networkAnimator.Play(stateHash);
             return;
         }
 
-        animator.CrossFade(stateHash, crossFadeDuration);
+        networkAnimator.CrossFade(stateHash, crossFadeDuration, 0);
     }
 
     private void SubscribeToModel()
